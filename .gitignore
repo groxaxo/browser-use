@@ -30,6 +30,15 @@ dist/
 *.log
 *.bak
 
+# Learning module databases
+browser_use_learning.db
+browser_use_learning.db-wal
+browser_use_learning.db-shm
+*_text.faiss
+*_text_map.json
+*_image.faiss
+*_image_map.json
+
 # Secrets and sensitive files
 secrets.env
 .env
