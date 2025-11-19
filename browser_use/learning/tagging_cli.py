@@ -12,7 +12,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from browser_use.learning.database import DatabaseService
-from browser_use.learning.views import ItemCandidate, Tag
+from browser_use.learning.views import ItemCandidate
 
 if TYPE_CHECKING:
 	pass

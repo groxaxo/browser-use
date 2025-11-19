@@ -45,9 +45,7 @@ class RetrievalService:
 		"""
 		return self.database.get_items_by_tag(tag_name)
 
-	def search_similar_items(
-		self, query_embedding: list[float], top_k: int = 5, use_text: bool = True
-	) -> list[QueryResult]:
+	def search_similar_items(self, query_embedding: list[float], top_k: int = 5, use_text: bool = True) -> list[QueryResult]:
 		"""
 		Search for similar items using vector similarity.
 
@@ -203,34 +201,34 @@ class RetrievalService:
 
 		# Count items
 		cursor.execute(
-			'''
+			"""
             SELECT COUNT(*) as count FROM item_tags WHERE tag_id = ?
-        ''',
+        """,
 			(tag_id,),
 		)
 		item_count = cursor.fetchone()['count']
 
 		# Count selectors
 		cursor.execute(
-			'''
+			"""
             SELECT COUNT(*) as count FROM tag_selectors WHERE tag_id = ?
-        ''',
+        """,
 			(tag_id,),
 		)
 		selector_count = cursor.fetchone()['count']
 
 		# Get average confidence
 		cursor.execute(
-			'''
+			"""
             SELECT AVG(confidence) as avg_conf FROM tag_selectors WHERE tag_id = ?
-        ''',
+        """,
 			(tag_id,),
 		)
 		avg_confidence = cursor.fetchone()['avg_conf'] or 0.0
 
 		# Get page distribution
 		cursor.execute(
-			'''
+			"""
             SELECT i.page_url, COUNT(*) as count
             FROM items i
             JOIN item_tags it ON i.id = it.item_id
@@ -238,7 +236,7 @@ class RetrievalService:
             GROUP BY i.page_url
             ORDER BY count DESC
             LIMIT 5
-        ''',
+        """,
 			(tag_id,),
 		)
 		top_pages = [{'url': row['page_url'], 'count': row['count']} for row in cursor.fetchall()]

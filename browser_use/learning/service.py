@@ -8,7 +8,6 @@ Provides high-level API for:
 """
 
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from browser_use.learning.database import DatabaseService
@@ -194,9 +193,7 @@ class LearningService:
 		tags = self.retrieval.get_all_tags()
 		return [tag.name for tag in tags]
 
-	async def learn_from_action(
-		self, tag_name: str, selector: str, success: bool, page_url: str | None = None
-	) -> None:
+	async def learn_from_action(self, tag_name: str, selector: str, success: bool, page_url: str | None = None) -> None:
 		"""
 		Learn from a navigation action result.
 

@@ -7,7 +7,6 @@ Supports:
 """
 
 import logging
-from typing import Any
 
 try:
 	from sentence_transformers import SentenceTransformer
@@ -29,9 +28,7 @@ logger = logging.getLogger(__name__)
 class EmbeddingService:
 	"""Service for generating embeddings."""
 
-	def __init__(
-		self, text_model_name: str = 'all-MiniLM-L6-v2', image_model_name: str | None = None, use_openai: bool = False
-	):
+	def __init__(self, text_model_name: str = 'all-MiniLM-L6-v2', image_model_name: str | None = None, use_openai: bool = False):
 		"""
 		Initialize embedding service.
 
@@ -60,7 +57,6 @@ class EmbeddingService:
 			try:
 				# Try to load CLIP if available
 				import clip
-				import torch
 
 				self.image_model, _ = clip.load(image_model_name, device='cpu')
 				logger.info(f'Loaded image embedding model: {image_model_name}')

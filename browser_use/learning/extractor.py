@@ -8,9 +8,7 @@ Extracts items from web pages using:
 """
 
 import io
-import json
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 try:
@@ -96,7 +94,9 @@ class DOMExtractor:
 							if not box_dict:
 								continue
 
-							bbox = BoundingBox(x=box_dict['x'], y=box_dict['y'], width=box_dict['width'], height=box_dict['height'])
+							bbox = BoundingBox(
+								x=box_dict['x'], y=box_dict['y'], width=box_dict['width'], height=box_dict['height']
+							)
 
 							# Get text content
 							text_content = await element.inner_text()
@@ -179,7 +179,7 @@ class DOMExtractor:
 
 			# Fallback: use Playwright's selector generation
 			selector = await element.evaluate(
-				'''el => {
+				"""el => {
                 // Simple selector generation
                 let selector = el.tagName.toLowerCase();
                 if (el.id) return '#' + el.id;
@@ -190,7 +190,7 @@ class DOMExtractor:
                     }
                 }
                 return selector;
-            }'''
+            }"""
 			)
 			return selector
 		except Exception as e:
@@ -211,9 +211,7 @@ class VisionExtractor:
 		self.browser_session = browser_session
 		self.logger = logger
 
-	async def extract_items(
-		self, screenshot_path: str | None = None, page_url: str | None = None
-	) -> list[ItemCandidate]:
+	async def extract_items(self, screenshot_path: str | None = None, page_url: str | None = None) -> list[ItemCandidate]:
 		"""
 		Extract items from page screenshot using OCR.
 

@@ -21,13 +21,11 @@ except ImportError:
 
 from browser_use.learning.views import (
 	ItemCandidate,
-	ItemTag,
 	ItemType,
 	QueryResult,
 	SelectorConfidence,
 	StoredItem,
 	Tag,
-	TagEmbedding,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,7 +73,7 @@ class DatabaseService:
 		cursor = self.conn.cursor()
 
 		# Items table
-		cursor.execute('''
+		cursor.execute("""
             CREATE TABLE IF NOT EXISTS items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 page_url TEXT NOT NULL,
@@ -91,20 +89,20 @@ class DatabaseService:
                 image_vector_id INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
+        """)
 
 		# Tags table
-		cursor.execute('''
+		cursor.execute("""
             CREATE TABLE IF NOT EXISTS tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL,
                 description TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
+        """)
 
 		# Item-Tag association
-		cursor.execute('''
+		cursor.execute("""
             CREATE TABLE IF NOT EXISTS item_tags (
                 item_id INTEGER NOT NULL,
                 tag_id INTEGER NOT NULL,
@@ -114,10 +112,10 @@ class DatabaseService:
                 FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
                 FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
             )
-        ''')
+        """)
 
 		# Item metadata (key-value for extensibility)
-		cursor.execute('''
+		cursor.execute("""
             CREATE TABLE IF NOT EXISTS item_meta (
                 item_id INTEGER NOT NULL,
                 key TEXT NOT NULL,
@@ -125,10 +123,10 @@ class DatabaseService:
                 PRIMARY KEY (item_id, key),
                 FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
             )
-        ''')
+        """)
 
 		# Selector confidence tracking
-		cursor.execute('''
+		cursor.execute("""
             CREATE TABLE IF NOT EXISTS tag_selectors (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tag_id INTEGER NOT NULL,
@@ -140,10 +138,10 @@ class DatabaseService:
                 FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
                 UNIQUE(tag_id, selector)
             )
-        ''')
+        """)
 
 		# Tag embeddings (centroids)
-		cursor.execute('''
+		cursor.execute("""
             CREATE TABLE IF NOT EXISTS tag_embeddings (
                 tag_id INTEGER PRIMARY KEY,
                 embedding TEXT NOT NULL,
@@ -151,7 +149,7 @@ class DatabaseService:
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
             )
-        ''')
+        """)
 
 		# Create indices for performance
 		cursor.execute('CREATE INDEX IF NOT EXISTS idx_items_page_url ON items(page_url)')
@@ -162,13 +160,13 @@ class DatabaseService:
 
 		# Enable full-text search on cleaned_text
 		try:
-			cursor.execute('''
+			cursor.execute("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
                     cleaned_text,
                     content=items,
                     content_rowid=id
                 )
-            ''')
+            """)
 		except sqlite3.OperationalError:
 			logger.warning('FTS5 not available, full-text search will be limited')
 
@@ -234,9 +232,7 @@ class DatabaseService:
 
 			faiss.write_index(self.image_index, str(image_index_path))
 			with open(image_id_map_path, 'w') as f:
-				json.dump(
-					{'id_map': {k: v for k, v in self.image_id_map.items()}, 'next_id': self.next_image_vector_id}, f
-				)
+				json.dump({'id_map': {k: v for k, v in self.image_id_map.items()}, 'next_id': self.next_image_vector_id}, f)
 
 			logger.info('Saved vector indices')
 		except Exception as e:
@@ -258,12 +254,12 @@ class DatabaseService:
 		bbox_json = json.dumps(item.bbox.model_dump()) if item.bbox else None
 
 		cursor.execute(
-			'''
+			"""
             INSERT INTO items (
                 page_url, page_title, selector, dom_path,
                 raw_text, cleaned_text, item_type, bbox, screenshot_path
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''',
+        """,
 			(
 				item.page_url,
 				item.page_title,
@@ -288,9 +284,7 @@ class DatabaseService:
 
 		# Store metadata
 		for key, value in item.attributes.items():
-			cursor.execute(
-				'INSERT INTO item_meta (item_id, key, value) VALUES (?, ?, ?)', (item_id, key, str(value))
-			)
+			cursor.execute('INSERT INTO item_meta (item_id, key, value) VALUES (?, ?, ?)', (item_id, key, str(value)))
 
 		self.conn.commit()
 		return item_id
@@ -362,12 +356,12 @@ class DatabaseService:
 		# Get all items with this tag that have text embeddings
 		cursor = self.conn.cursor()
 		cursor.execute(
-			'''
+			"""
             SELECT i.id, i.text_vector_id
             FROM items i
             JOIN item_tags it ON i.id = it.item_id
             WHERE it.tag_id = ? AND i.text_vector_id IS NOT NULL
-        ''',
+        """,
 			(tag_id,),
 		)
 
@@ -387,10 +381,10 @@ class DatabaseService:
 		if embeddings:
 			centroid = np.mean(embeddings, axis=0).tolist()
 			cursor.execute(
-				'''
+				"""
                 INSERT OR REPLACE INTO tag_embeddings (tag_id, embedding, item_count, last_updated)
                 VALUES (?, ?, ?, ?)
-            ''',
+            """,
 				(tag_id, json.dumps(centroid), len(embeddings), datetime.utcnow()),
 			)
 			self.conn.commit()
@@ -468,11 +462,11 @@ class DatabaseService:
 		"""Get all tags for an item."""
 		cursor = self.conn.cursor()
 		cursor.execute(
-			'''
+			"""
             SELECT t.* FROM tags t
             JOIN item_tags it ON t.id = it.tag_id
             WHERE it.item_id = ?
-        ''',
+        """,
 			(item_id,),
 		)
 
@@ -485,12 +479,12 @@ class DatabaseService:
 		"""Get all items with a specific tag."""
 		cursor = self.conn.cursor()
 		cursor.execute(
-			'''
+			"""
             SELECT i.* FROM items i
             JOIN item_tags it ON i.id = it.item_id
             JOIN tags t ON it.tag_id = t.id
             WHERE t.name = ?
-        ''',
+        """,
 			(tag_name,),
 		)
 
@@ -533,11 +527,11 @@ class DatabaseService:
 			confidence = success_count / usage_count
 
 			cursor.execute(
-				'''
+				"""
                 UPDATE tag_selectors
                 SET usage_count = ?, success_count = ?, confidence = ?, last_used = ?
                 WHERE id = ?
-            ''',
+            """,
 				(usage_count, success_count, confidence, datetime.utcnow(), row['id']),
 			)
 		else:
@@ -546,10 +540,10 @@ class DatabaseService:
 			confidence = success_count / usage_count
 
 			cursor.execute(
-				'''
+				"""
                 INSERT INTO tag_selectors (tag_id, selector, usage_count, success_count, confidence, last_used)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''',
+            """,
 				(tag_id, selector, usage_count, success_count, confidence, datetime.utcnow()),
 			)
 
@@ -559,12 +553,12 @@ class DatabaseService:
 		"""Get the best selectors for a tag, sorted by confidence."""
 		cursor = self.conn.cursor()
 		cursor.execute(
-			'''
+			"""
             SELECT * FROM tag_selectors
             WHERE tag_id = ?
             ORDER BY confidence DESC, usage_count DESC
             LIMIT ?
-        ''',
+        """,
 			(tag_id, limit),
 		)
 
